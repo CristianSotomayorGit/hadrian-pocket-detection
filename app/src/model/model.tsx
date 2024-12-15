@@ -18,9 +18,9 @@ export const Model = (): JSX.Element => {
 
     const { adjacencyMap, edgeMetadata, loading } = useDataLoader();
 
-    usePocketDetections(adjacencyMap, 
-        edgeMetadata, 
-        loading);
+    const pocketClusters = usePocketDetections(adjacencyMap, edgeMetadata, loading);
+
+    console.log(pocketClusters)
 
     React.useEffect(() => {
         new GLTFLoader().load('./colored_glb.glb', gltf => {
