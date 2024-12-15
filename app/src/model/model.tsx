@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { OrbitControls } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
 import { GLTFLoader } from 'three-stdlib';
+import { useDataLoader } from '../hooks/useDataLoader';
 
 interface ModelEntity {
     bufferGeometry: THREE.BufferGeometry;
@@ -13,6 +14,10 @@ interface ModelEntity {
 
 export const Model = (): JSX.Element => {
     const [modelEnts, setModelEnts] = React.useState<ModelEntity[]>([]);
+
+    const { adjacencyMap, edgeMetadata, loading } = useDataLoader();
+
+    console.log(adjacencyMap, edgeMetadata, loading)
 
     React.useEffect(() => {
         new GLTFLoader().load('./colored_glb.glb', gltf => {

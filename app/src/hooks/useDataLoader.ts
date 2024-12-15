@@ -1,0 +1,46 @@
+import { useEffect, useState } from "react";
+
+interface AdjacencyMap {
+    [entityId: string]: string[];
+}
+
+interface EdgeMetadataMap {
+    [edgeId: string]: number[];
+}
+
+
+export function useDataLoader() {
+    
+    const [adjacencyMap, setAdjacencyMap] = useState<AdjacencyMap>({});
+    const [edgeMetadata, setEdgeMetadate] = useState<EdgeMetadataMap>({});
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function loadAllData() {
+            try {
+                const [adjResponse, edgeResponse] = await Promise.all([
+                    fetch('./adjacency_graph.json'),
+                    fetch('./adjacency_graph_edge_metadata.json'),
+                ]);
+
+                const adjacencyGraph = await adjResponse.json();
+                const adjacencyGraphMetadata = await edgeResponse.json();
+
+                setAdjacencyMap(adjacencyGraph);
+                setEdgeMetadate(adjacencyGraphMetadata);
+            }
+
+            catch (err) {
+                console.error('Error loading data:', err);
+            }
+
+            finally {
+                setLoading(false);
+            }
+        }
+
+        loadAllData();
+    }, []);
+
+    return { adjacencyMap, edgeMetadata, loading };
+}
