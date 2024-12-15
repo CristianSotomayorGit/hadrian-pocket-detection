@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 
+type GraphEdgeType = 0 | 1 | 2; 
+
 interface AdjacencyMap {
     [entityId: string]: string[];
 }
 
 interface EdgeMetadataMap {
-    [edgeId: string]: number[];
+    [edgeId: string]: GraphEdgeType[];
 }
-
 
 export function useDataLoader() {
     

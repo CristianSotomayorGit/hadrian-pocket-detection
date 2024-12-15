@@ -19,7 +19,7 @@ export const Model = (): JSX.Element => {
     const { adjacencyMap, edgeMetadata, loading } = useDataLoader();
 
     usePocketDetections(adjacencyMap, 
-        // edgeMetadata, 
+        edgeMetadata, 
         loading);
 
     React.useEffect(() => {
