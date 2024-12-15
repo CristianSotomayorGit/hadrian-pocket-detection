@@ -6,6 +6,7 @@ import { OrbitControls } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
 import { GLTFLoader } from 'three-stdlib';
 import { useDataLoader } from '../hooks/useDataLoader';
+import { usePocketDetections } from '../hooks/usePocketDetections';
 
 interface ModelEntity {
     bufferGeometry: THREE.BufferGeometry;
@@ -17,7 +18,9 @@ export const Model = (): JSX.Element => {
 
     const { adjacencyMap, edgeMetadata, loading } = useDataLoader();
 
-    console.log(adjacencyMap, edgeMetadata, loading)
+    usePocketDetections(adjacencyMap, 
+        // edgeMetadata, 
+        loading);
 
     React.useEffect(() => {
         new GLTFLoader().load('./colored_glb.glb', gltf => {
