@@ -1,0 +1,11 @@
+.pocket-info {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 10px;
+    border-radius: 5px;
+    max-width: 200px;
+    color: #000;
+    z-index: 1;
+  }
