@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState, useCallback } from 'react';
 
-type GraphEdgeType = 0 | 1 | 2; 
+type GraphEdgeType = 0 | 1 | 2;
 
 interface AdjacencyMap {
   [entityId: string]: string[];
@@ -10,16 +10,10 @@ interface EdgeMetadataMap {
   [edgeId: string]: GraphEdgeType[];
 }
 
-export function usePocketDetections(
-  adjacencyMap: AdjacencyMap,
-  edgeMetadata: EdgeMetadataMap,
-  loading: boolean
-) {
+export function usePocketDetections() {
   const [pocketClusters, setPocketClusters] = useState<Map<string, number> | null>(null);
 
-  useEffect(() => {
-    if (loading) return;
-
+  const detectPockets = useCallback((adjacencyMap: AdjacencyMap, edgeMetadata: EdgeMetadataMap) => {
     let mostConnectedFaceId = '';
     let maxNeighbors = 0;
     for (const faceId in adjacencyMap) {
@@ -36,10 +30,9 @@ export function usePocketDetections(
     }
 
     for (const edgeId in edgeMetadata) {
-      const edgeTypes = edgeMetadata[edgeId]; 
+      const edgeTypes = edgeMetadata[edgeId];
       if (edgeTypes.includes(0)) {
         const [entA, entB] = edgeId.split('-');
-        
         if (entA === mostConnectedFaceId || entB === mostConnectedFaceId) {
           continue;
         }
@@ -73,7 +66,6 @@ export function usePocketDetections(
 
     for (const entityId in adjacencyMap) {
       if (entityId === mostConnectedFaceId) continue;
-
       if (!visited.has(entityId)) {
         bfs(entityId);
         clusterId++;
@@ -94,7 +86,7 @@ export function usePocketDetections(
     }
 
     setPocketClusters(finalClusterMap);
-  }, [adjacencyMap, edgeMetadata, loading]);
+  }, []);
 
-  return pocketClusters;
+  return { pocketClusters, detectPockets };
 }

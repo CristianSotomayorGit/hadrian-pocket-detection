@@ -5,3 +5,7 @@ html, body, #root, .canvas-container {
     padding: 0;
     overflow: hidden;
   }
+  
+  .canvas-container {
+    position: relative;
+  }

@@ -7,56 +7,71 @@ import { Canvas } from '@react-three/fiber';
 import { GLTFLoader } from 'three-stdlib';
 import { useDataLoader } from '../hooks/useDataLoader';
 import { usePocketDetections } from '../hooks/usePocketDetections';
+import DetectButton from '../components/DetectButton/DetectButton';
 
 interface ModelEntity {
   bufferGeometry: THREE.BufferGeometry;
+  entityId: string;
   color: string;
+  opacity: number;
+  belongsToPocket: boolean;
 }
 
-export const Model = (): JSX.Element => {
+const Model: React.FC = () => {
   const [modelEnts, setModelEnts] = React.useState<ModelEntity[]>([]);
+  const [highlightPockets, setHighlightPockets] = React.useState<boolean>(false);
+  const { adjacencyMap, edgeMetadata } = useDataLoader();
+  const { pocketClusters, detectPockets } = usePocketDetections();
 
-  const { adjacencyMap, edgeMetadata, loading } = useDataLoader();
-  const pocketClusters = usePocketDetections(adjacencyMap, edgeMetadata, loading);
+  const handleDetectPockets = () => {
+    if (!highlightPockets) {
+      detectPockets(adjacencyMap, edgeMetadata);
+      setHighlightPockets(true);
+    } else {
+      setHighlightPockets(false);
+    }
+  };
 
   React.useEffect(() => {
-    if (!pocketClusters) return;
-
     new GLTFLoader().load('./colored_glb.glb', gltf => {
       const newModuleEntities: ModelEntity[] = [];
       gltf.scene.traverse(element => {
         if (element.type !== 'Mesh') return;
-
         const meshElement = element as THREE.Mesh;
         const entityId = meshElement.name.split('_')[2];
-
-        if ((pocketClusters.has(entityId))) {
-          newModuleEntities.push({
-            bufferGeometry: meshElement.geometry as THREE.BufferGeometry,
-            color: 'rgb(255, 0, 0)',
-          });
+        let color = 'rgb(120, 120, 120)';
+        let opacity = 1;
+        let belongsToPocket = false;
+        if (highlightPockets && pocketClusters) {
+          if (pocketClusters.has(entityId)) {
+            color = 'rgb(255, 0, 0)';
+            opacity = 1;
+            belongsToPocket = true;
+          } else {
+            opacity = 0.5;
+          }
         }
-
-        else {
-          newModuleEntities.push({
-            bufferGeometry: meshElement.geometry as THREE.BufferGeometry,
-            color: 'rgb(120, 120, 120)',
-
-          });
-        }
+        newModuleEntities.push({
+          bufferGeometry: meshElement.geometry as THREE.BufferGeometry,
+          entityId: entityId,
+          color: color,
+          opacity: opacity,
+          belongsToPocket: belongsToPocket,
+        });
       });
       setModelEnts(newModuleEntities);
     });
-
-  }, [pocketClusters])
+  }, [highlightPockets, pocketClusters]);
 
   return (
     <div className="canvas-container">
+      <DetectButton isActive={highlightPockets} onClick={handleDetectPockets} />
       <Canvas
         shadows
         camera={{ position: [0, 0, 300] as [number, number, number] }}
+        style={{ width: '100%', height: '100%' }}
       >
-        <color attach="background" args={['#1a1a1a']} />
+        <color attach="background" args={['#000080']} />
         <ambientLight intensity={0.3} />
         <directionalLight
           castShadow
@@ -66,28 +81,24 @@ export const Model = (): JSX.Element => {
         <OrbitControls makeDefault />
 
         <group>
-          {modelEnts.map((ent, index) => {
-            const isPocketFace = ent.color === 'rgb(255, 0, 0)';
-
-            return (
-              <mesh
-                key={index}
-                geometry={ent.bufferGeometry}
-                castShadow
-                receiveShadow
-              >
-                <meshStandardMaterial
-                  color={ent.color}
-                  transparent={!isPocketFace}
-                  opacity={isPocketFace ? 1 : 0.5}
-                />
-              </mesh>
-            );
-          })}
+          {modelEnts.map((ent, index) => (
+            <mesh
+              key={index}
+              geometry={ent.bufferGeometry}
+              castShadow
+              receiveShadow
+            >
+              <meshStandardMaterial
+                color={ent.color}
+                transparent={!ent.belongsToPocket}
+                opacity={ent.opacity}
+              />
+            </mesh>
+          ))}
         </group>
       </Canvas>
     </div>
   );
-
-
 };
+
+export default Model;

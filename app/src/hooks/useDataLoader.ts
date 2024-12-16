@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-type GraphEdgeType = 0 | 1 | 2; 
+type GraphEdgeType = 0 | 1 | 2;
 
 interface AdjacencyMap {
     [entityId: string]: string[];
@@ -11,10 +11,9 @@ interface EdgeMetadataMap {
 }
 
 export function useDataLoader() {
-    
+
     const [adjacencyMap, setAdjacencyMap] = useState<AdjacencyMap>({});
     const [edgeMetadata, setEdgeMetadate] = useState<EdgeMetadataMap>({});
-    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         async function loadAllData() {
@@ -34,14 +33,10 @@ export function useDataLoader() {
             catch (err) {
                 console.error('Error loading data:', err);
             }
-
-            finally {
-                setLoading(false);
-            }
         }
 
         loadAllData();
     }, []);
 
-    return { adjacencyMap, edgeMetadata, loading };
+    return { adjacencyMap, edgeMetadata };
 }
