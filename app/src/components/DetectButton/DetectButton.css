@@ -1,0 +1,27 @@
+.detect-button {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  padding: 10px 20px;
+  background-color: rgba(255, 255, 255, 0.8);
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.detect-button:hover {
+  background-color: rgba(255, 255, 255, 1);
+}
+
+.pocket-info {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 10px;
+  border-radius: 5px;
+  max-width: 200px;
+  color: #000;
+  z-index: 1;
+}
