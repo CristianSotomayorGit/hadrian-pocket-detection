@@ -3,7 +3,7 @@ import './model.css';
 import React from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from '@react-three/drei';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useThree, extend, ThreeEvent } from '@react-three/fiber';
 import { GLTFLoader } from 'three-stdlib';
 import { useDataLoader } from '../hooks/useDataLoader';
 import { usePocketDetections } from '../hooks/usePocketDetections';
@@ -25,27 +25,28 @@ const Model: React.FC = () => {
   const { adjacencyMap, edgeMetadata } = useDataLoader();
   const { pocketClusters, detectPockets } = usePocketDetections();
 
-
   const handleDetectPockets = () => {
     if (!highlightPockets) {
       detectPockets(adjacencyMap, edgeMetadata);
       setHighlightPockets(true);
     } else {
       setHighlightPockets(false);
-      setSelectedPocket(null); // Optional: Deselect pocket when hiding pockets
+      setSelectedPocket(null);
     }
   };
 
-  const handlePocketClick = (entityId: string) => {
+  const handlePocketClick = (event: ThreeEvent<MouseEvent>, entityId: string) => {
     const clusterId = pocketClusters?.get(entityId);
     if (clusterId !== undefined) {
       setSelectedPocket(clusterId);
     } else {
       setSelectedPocket(null);
     }
+    event.stopPropagation();
   };
 
   React.useEffect(() => {
+    if (!adjacencyMap || !edgeMetadata) return;
 
     console.log(pocketClusters)
     new GLTFLoader().load(
@@ -59,6 +60,7 @@ const Model: React.FC = () => {
           let color = 'rgb(120, 120, 120)';
           let opacity = 1;
           let belongsToPocket = false;
+
           if (highlightPockets && pocketClusters) {
             if (pocketClusters.has(entityId)) {
               color = 'rgb(255, 0, 0)';
@@ -68,6 +70,7 @@ const Model: React.FC = () => {
               opacity = 0.5;
             }
           }
+
           newModuleEntities.push({
             bufferGeometry: meshElement.geometry as THREE.BufferGeometry,
             entityId: entityId,
@@ -83,7 +86,7 @@ const Model: React.FC = () => {
         console.error('Error loading GLTF model:', error);
       }
     );
-  }, [highlightPockets, pocketClusters]);
+  }, [highlightPockets, pocketClusters, adjacencyMap, edgeMetadata]);
 
   return (
     <div className="canvas-container">
@@ -104,12 +107,10 @@ const Model: React.FC = () => {
 
         <group>
           {modelEnts.map((ent, index) => {
-            // Determine if this entity is part of the selected pocket
             const isSelectedPocket =
               selectedPocket !== null &&
               pocketClusters?.get(ent.entityId) === selectedPocket;
 
-            // Set color to yellow if it's the selected pocket, else follow existing logic
             const displayColor = isSelectedPocket
               ? 'yellow'
               : ent.color;
@@ -120,7 +121,7 @@ const Model: React.FC = () => {
                 geometry={ent.bufferGeometry}
                 castShadow
                 receiveShadow
-                onClick={() => handlePocketClick(ent.entityId)}
+                onClick={(event) => handlePocketClick(event, ent.entityId)}
               >
                 <meshStandardMaterial
                   color={displayColor}
