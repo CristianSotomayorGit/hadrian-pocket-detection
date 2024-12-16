@@ -68,7 +68,7 @@ const Model: React.FC = () => {
       <DetectButton isActive={highlightPockets} onClick={handleDetectPockets} />
       <Canvas
         shadows
-        camera={{ position: [0, 0, 300] as [number, number, number] }}
+        camera={{ position: [300, 300, 300] as [number, number, number] }}
         style={{ width: '100%', height: '100%' }}
       >
         <color attach="background" args={['#000080']} />
