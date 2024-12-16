@@ -1,13 +1,13 @@
-// src/components/Model.tsx
 import './model.css';
 import React from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from '@react-three/drei';
-import { Canvas, useThree, extend, ThreeEvent } from '@react-three/fiber';
+import { Canvas, ThreeEvent } from '@react-three/fiber';
 import { GLTFLoader } from 'three-stdlib';
 import { useDataLoader } from '../hooks/useDataLoader';
 import { usePocketDetections } from '../hooks/usePocketDetections';
 import DetectButton from '../components/DetectButton/DetectButton';
+import PocketInfo from '../components/PocketInfo/PocketInfo';
 
 interface ModelEntity {
   bufferGeometry: THREE.BufferGeometry;
@@ -42,13 +42,12 @@ const Model: React.FC = () => {
     } else {
       setSelectedPocket(null);
     }
-    event.stopPropagation();
+    event.stopPropagation(); 
   };
 
   React.useEffect(() => {
     if (!adjacencyMap || !edgeMetadata) return;
 
-    console.log(pocketClusters)
     new GLTFLoader().load(
       './colored_glb.glb',
       gltf => {
@@ -133,11 +132,7 @@ const Model: React.FC = () => {
           })}
         </group>
       </Canvas>
-      {selectedPocket !== null && (
-        <div className="pocket-info">
-          <h3>Selected Pocket: {selectedPocket}</h3>
-        </div>
-      )}
+      {selectedPocket !== null && <PocketInfo selectedPocket={selectedPocket} />}
     </div>
   );
 };
