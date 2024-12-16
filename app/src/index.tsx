@@ -4,7 +4,6 @@ import { Model } from './model/model';
 
 const App = () => (
     <React.Fragment>
-        <span>Hello world</span>
         <Model />
     </React.Fragment>
 );
