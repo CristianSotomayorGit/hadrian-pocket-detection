@@ -1,3 +1,4 @@
+// src/components/Model.tsx
 import './model.css';
 import React from 'react';
 import * as THREE from 'three';
@@ -24,12 +25,14 @@ const Model: React.FC = () => {
   const { adjacencyMap, edgeMetadata } = useDataLoader();
   const { pocketClusters, detectPockets } = usePocketDetections();
 
+
   const handleDetectPockets = () => {
     if (!highlightPockets) {
       detectPockets(adjacencyMap, edgeMetadata);
       setHighlightPockets(true);
     } else {
       setHighlightPockets(false);
+      setSelectedPocket(null); // Optional: Deselect pocket when hiding pockets
     }
   };
 
@@ -43,6 +46,8 @@ const Model: React.FC = () => {
   };
 
   React.useEffect(() => {
+
+    console.log(pocketClusters)
     new GLTFLoader().load(
       './colored_glb.glb',
       gltf => {
@@ -72,6 +77,10 @@ const Model: React.FC = () => {
           });
         });
         setModelEnts(newModuleEntities);
+      },
+      undefined,
+      error => {
+        console.error('Error loading GLTF model:', error);
       }
     );
   }, [highlightPockets, pocketClusters]);
@@ -94,21 +103,33 @@ const Model: React.FC = () => {
         <OrbitControls makeDefault />
 
         <group>
-          {modelEnts.map((ent, index) => (
-            <mesh
-              key={index}
-              geometry={ent.bufferGeometry}
-              castShadow
-              receiveShadow
-              onClick={() => handlePocketClick(ent.entityId)}
-            >
-              <meshStandardMaterial
-                color={ent.color}
-                transparent={!ent.belongsToPocket}
-                opacity={ent.opacity}
-              />
-            </mesh>
-          ))}
+          {modelEnts.map((ent, index) => {
+            // Determine if this entity is part of the selected pocket
+            const isSelectedPocket =
+              selectedPocket !== null &&
+              pocketClusters?.get(ent.entityId) === selectedPocket;
+
+            // Set color to yellow if it's the selected pocket, else follow existing logic
+            const displayColor = isSelectedPocket
+              ? 'yellow'
+              : ent.color;
+
+            return (
+              <mesh
+                key={index}
+                geometry={ent.bufferGeometry}
+                castShadow
+                receiveShadow
+                onClick={() => handlePocketClick(ent.entityId)}
+              >
+                <meshStandardMaterial
+                  color={displayColor}
+                  transparent={!ent.belongsToPocket}
+                  opacity={ent.opacity}
+                />
+              </mesh>
+            );
+          })}
         </group>
       </Canvas>
       {selectedPocket !== null && (
