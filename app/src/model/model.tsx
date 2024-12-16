@@ -104,7 +104,7 @@ const Model: React.FC = () => {
             >
               <meshStandardMaterial
                 color={ent.color}
-                transparent={!ent.belongsToPocket && highlightPockets}
+                transparent={!ent.belongsToPocket}
                 opacity={ent.opacity}
               />
             </mesh>
