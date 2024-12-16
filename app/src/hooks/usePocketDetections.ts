@@ -85,7 +85,55 @@ export function usePocketDetections() {
       }
     }
 
-    setPocketClusters(finalClusterMap);
+
+    const parent = new Map<number, number>();
+    for (let cid = 0; cid < newClusterId; cid++) {
+      parent.set(cid, cid);
+    }
+
+    const find = (cid: number): number => {
+      if (parent.get(cid) !== cid) {
+        parent.set(cid, find(parent.get(cid)!));
+      }
+      return parent.get(cid)!;
+    };
+
+    const union = (cid1: number, cid2: number): void => {
+      const root1 = find(cid1);
+      const root2 = find(cid2);
+      if (root1 !== root2) {
+        parent.set(root2, root1);
+      }
+    };
+
+    for (const edgeId in edgeMetadata) {
+      const [entA, entB] = edgeId.split('-');
+      const clusterA = finalClusterMap.get(entA);
+      const clusterB = finalClusterMap.get(entB);
+
+      if (
+        clusterA !== undefined &&
+        clusterB !== undefined &&
+        clusterA !== clusterB
+      ) {
+        union(clusterA, clusterB);
+      }
+    }
+
+    const rootToNewId = new Map<number, number>();
+    let mergedClusterId = 0;
+    const mergedClusterMap = new Map<string, number>();
+
+    finalClusterMap.forEach((cid, entId) => {
+      const root = find(cid);
+      if (!rootToNewId.has(root)) {
+        rootToNewId.set(root, mergedClusterId);
+        mergedClusterId++;
+      }
+      mergedClusterMap.set(entId, rootToNewId.get(root)!);
+    });
+
+    setPocketClusters(mergedClusterMap);
   }, []);
 
   return { pocketClusters, detectPockets };
