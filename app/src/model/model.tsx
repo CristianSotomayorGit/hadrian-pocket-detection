@@ -127,7 +127,7 @@ const Model: React.FC = () => {
     if (!isResizing.current || !sidebarRef.current) return;
     const newWidth = window.innerWidth - e.clientX;
     const minWidth = 200;
-    const maxWidth = 600;
+    const maxWidth = 500;
     if (newWidth >= minWidth && newWidth <= maxWidth) {
       sidebarRef.current.style.width = `${newWidth}px`;
     }
@@ -190,7 +190,7 @@ const Model: React.FC = () => {
           {averagePosition && (
             <>
               <CrossSectionIndicator location={averagePosition} axis='x' />
-              <CrossSectionIndicator location={averagePosition} axis='z' />'
+              <CrossSectionIndicator location={averagePosition} axis='z' />
             </>
           )}
         </group>
@@ -210,6 +210,9 @@ const Model: React.FC = () => {
         <div className="sidebar" ref={sidebarRef}>
           <div className="resizer" onMouseDown={handleMouseDown}></div>
           <PocketInfo selectedPocket={selectedPocketId} />
+          <div className="cross-section-header">
+            <h4>X Axis Cross Section</h4>
+          </div>
           <CrossSection
             clippingPlane={clippingPlaneX}
             modelEntities={modelEntities}
@@ -218,6 +221,9 @@ const Model: React.FC = () => {
             pocketClusters={pocketClusters}
             clippingAxis="x"
           />
+          <div className="cross-section-header">
+            <h4>Z Axis Cross Section</h4>
+          </div>
           <CrossSection
             clippingPlane={clippingPlaneZ}
             modelEntities={modelEntities}

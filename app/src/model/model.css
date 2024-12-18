@@ -1,6 +1,3 @@
-/* src/components/model.css */
-
-/* Ensure the entire page and container take up full height and width */
 html,
 body,
 #root,
@@ -20,7 +17,6 @@ body,
   overflow: hidden;
 }
 
-/* Sidebar Styling */
 .sidebar {
   position: absolute;
   top: 0;
@@ -35,28 +31,31 @@ body,
   height: 100%;
   overflow-y: auto;
   width: 320px;
-  /* Initial width */
-
-  /* Resizing properties */
-  /* Note: The resizer handle will control the width */
   min-width: 200px;
-  max-width: 530px;
+  max-width: 500px;
 }
 
-/* Resizer Handle Styling */
 .resizer {
   position: absolute;
   left: -5px;
-  /* Position it on the left edge */
   top: 0;
   width: 10px;
   height: 100%;
   cursor: ew-resize;
-  /* Optional: Add a visual indicator */
   background-color: transparent;
 }
 
-/* Change background on hover for better UX */
 .resizer:hover {
   background-color: rgba(0, 0, 0, 0.1);
+}
+
+.cross-section-header {
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+h4 {
+  margin: 0px;
 }
