@@ -59,7 +59,6 @@ const Model: React.FC = () => {
 
   const handlePocketClick = (event: ThreeEvent<MouseEvent>, entityId: number) => {
     const clusterId = pocketClusters?.get(entityId);
-    console.log(clusterId)
     setSelectedPocketId(clusterId ?? null);
     event.stopPropagation();
   };
@@ -111,7 +110,7 @@ const Model: React.FC = () => {
         />
         <OrbitControls makeDefault />
         <group>
-          {modelEntities.map((ent, index) => {
+          {modelEntities.map((ent) => {
             const isSelectedPocket =
               selectedPocketId !== null &&
               pocketClusters?.get(ent.id) === selectedPocketId;
@@ -121,20 +120,23 @@ const Model: React.FC = () => {
             let displayColor = !highlightPockets ? ent.color : "gray";
             displayColor = highlightPockets && pocketClusters?.has(ent.id) ? "yellow" : displayColor;
             displayColor = isSelectedPocket ? "magenta" : displayColor;
-            const opacity = isSelectedPocket ? 1 : 0.8;
+            let opacity = !highlightPockets ? 1 : 0.7;
 
             return (
               <mesh
-                key={index}
+                key={ent.id}
                 geometry={ent.mesh.geometry}
                 castShadow
                 receiveShadow
                 onClick={(event) => handlePocketClick(event, ent.id)}
+                renderOrder={pocketClusters?.has(ent.id) ? 10 : 1}
+
               >
                 <meshStandardMaterial
                   color={displayColor}
-                  transparent={true}
+                  transparent={pocketClusters?.has(ent.id) ? false : true}
                   opacity={opacity}
+
                 />
               </mesh>
             );

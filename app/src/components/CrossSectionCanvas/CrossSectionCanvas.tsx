@@ -24,7 +24,7 @@ interface CrossSectionCanvasProps {
     targetPosition: THREE.Vector3 | null;
     selectedPocketId: number | null;
     pocketClusters: Map<number, number> | null;
-    clippingAxis: "x" | "y" | "z"
+    clippingAxis: "x" | "z";
 }
 
 const CrossSectionCanvas: React.FC<CrossSectionCanvasProps> = ({ modelEntities, targetPosition, selectedPocketId, pocketClusters, clippingAxis }) => {

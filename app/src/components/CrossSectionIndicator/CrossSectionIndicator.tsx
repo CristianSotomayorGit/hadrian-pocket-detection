@@ -12,7 +12,7 @@ const CROSS_SECTION_INDICATOR_SETTINGS = {
 
 interface CrossSectionIndicatorProps {
     location: THREE.Vector3;
-    axis: "x" | "y" | "z";
+    axis: "x" | "z";
 }
 
 const CrossSectionIndicator: React.FC<CrossSectionIndicatorProps> = ({ location, axis }) => {
