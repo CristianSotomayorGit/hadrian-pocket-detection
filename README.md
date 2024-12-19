@@ -34,8 +34,24 @@ A simple project that identifies “pocket” features in a 3D mesh by grouping 
 
 ---
 
-## Quick Start
+## How To Run It
 
-1. **Installation**  
+1. **Clone the repo**  
+   ```bash
+   git clone https://github.com/CristianSotomayorGit/hadrian-pocket-detection.git
+2. **Submit you credentials**  
+   ```bash
+   Username for 'https://github.com': <YOUR USERNAME>
+   Password for 'https://<YOUR USERNAME>@github.com': <YOUR TOKEN>
+3. **Move into app directory**  
+   ```bash
+   cd hadrian-pocket-detection/app
+4. **Install dependencies**  
    ```bash
    npm install
+5. **Build project**  
+   ```bash
+   npm run build
+6. **Build project**  
+   ```bash
+   npm run start
