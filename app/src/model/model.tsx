@@ -1,108 +1,55 @@
 import './model.css';
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { Edges, OrbitControls, GizmoHelper, GizmoViewport } from '@react-three/drei';
+import { OrbitControls, GizmoHelper, GizmoViewport } from '@react-three/drei';
 import { Canvas, ThreeEvent } from '@react-three/fiber';
-import { GLTFLoader } from 'three-stdlib';
 import { useDataLoader } from '../hooks/useDataLoader';
 import { usePocketDetections } from '../hooks/usePocketDetections';
 import DetectButton from '../components/DetectButton/DetectButton';
 import PocketInfo from '../components/PocketInfo/PocketInfo';
-import CrossSection from '../components/CrossSectionCanvas/CrossSectionCanvas';
-import { ModelEntity } from '../types/types';
 import CrossSectionIndicator from '../components/CrossSectionIndicator/CrossSectionIndicator';
-
+import CrossSectionCanvas from '../components/CrossSectionCanvas/CrossSectionCanvas';
 
 const Model: React.FC = () => {
-  const [modelEntities, setmodelEntities] = useState<ModelEntity[]>([]);
   const [selectedPocketId, setSelectedPocketId] = useState<number | null>(null);
   const [highlightPockets, setHighlightPockets] = useState<boolean>(false);
 
-  const { adjacencyMap, edgeMetadata } = useDataLoader();
+  const { modelEntities } = useDataLoader();
   const { pocketClusters, detectPockets } = usePocketDetections();
 
   const sidebarRef = useRef<HTMLDivElement>(null);
   const isResizing = useRef<boolean>(false);
 
-  useEffect(() => {
-    if (!adjacencyMap || !edgeMetadata) return;
-
-    new GLTFLoader().load(
-      './colored_glb.glb',
-      (gltf) => {
-        const newModuleEntities: ModelEntity[] = [];
-        gltf.scene.traverse((element) => {
-          if (element.type !== 'Mesh') return;
-          const meshElement = element as THREE.Mesh;
-          const nameParts = meshElement.name.split('_');
-          const entityId = nameParts.length > 2 ? nameParts[2] : 'UNKNOWN';
-
-          let color = 'gray';
-          let opacity = 1;
-          let belongsToPocket = false;
-
-          if (highlightPockets && pocketClusters) {
-            if (pocketClusters.has(entityId)) {
-              color = 'yellow';
-              opacity = 1;
-              belongsToPocket = true;
-            } else {
-              opacity = 0.5;
-            }
-          }
-
-          const geometry = meshElement.geometry as THREE.BufferGeometry;
-          geometry.computeBoundingBox();
-          const boundingBox = geometry.boundingBox;
-          let position = new THREE.Vector3(0, 0, 0);
-          if (boundingBox) {
-            boundingBox.getCenter(position);
-            meshElement.localToWorld(position);
-          }
-
-          newModuleEntities.push({
-            bufferGeometry: geometry,
-            entityId,
-            color,
-            opacity,
-            belongsToPocket,
-            position,
-          });
-        });
-        setmodelEntities(newModuleEntities);
-      },
-      undefined,
-      (error) => console.error('Error loading GLTF model:', error)
-    );
-  }, [highlightPockets, pocketClusters, adjacencyMap, edgeMetadata]);
-
   const calculateAveragePosition = (): THREE.Vector3 | null => {
     if (selectedPocketId === null) return null;
+
     const pocketEntities = modelEntities.filter(
-      (ent) => pocketClusters?.get(ent.entityId) === selectedPocketId
+      (ent) => pocketClusters?.get(ent.id) === selectedPocketId
     );
+
     if (pocketEntities.length === 0) return null;
 
-    const sum = pocketEntities.reduce(
-      (acc, ent) => acc.add(ent.position),
-      new THREE.Vector3(0, 0, 0)
-    );
+    const sum = pocketEntities.reduce((acc, ent) => {
+      const geometry = ent.mesh.geometry as THREE.BufferGeometry;
+      geometry.computeBoundingBox();
+      const boundingBox = geometry.boundingBox;
+      const position = new THREE.Vector3();
+      if (boundingBox) {
+        boundingBox.getCenter(position);
+        ent.mesh.localToWorld(position);
+        acc.add(position);
+      }
+      return acc;
+    }, new THREE.Vector3(0, 0, 0));
+
     return sum.divideScalar(pocketEntities.length);
   };
 
   const averagePosition = calculateAveragePosition();
 
-  const clippingPlaneX = useMemo(() => {
-    return averagePosition ? new THREE.Plane(new THREE.Vector3(0, 0, 1), -averagePosition.z) : null;
-  }, [averagePosition]);
-
-  const clippingPlaneZ = useMemo(() => {
-    return averagePosition ? new THREE.Plane(new THREE.Vector3(1, 0, 0), -averagePosition.x) : null;
-  }, [averagePosition]);
-
   const handleDetectPockets = () => {
     if (!highlightPockets) {
-      detectPockets(adjacencyMap, edgeMetadata);
+      detectPockets(modelEntities);
       setHighlightPockets(true);
     } else {
       setHighlightPockets(false);
@@ -110,8 +57,9 @@ const Model: React.FC = () => {
     }
   };
 
-  const handlePocketClick = (event: ThreeEvent<MouseEvent>, entityId: string) => {
+  const handlePocketClick = (event: ThreeEvent<MouseEvent>, entityId: number) => {
     const clusterId = pocketClusters?.get(entityId);
+    console.log(clusterId)
     setSelectedPocketId(clusterId ?? null);
     event.stopPropagation();
   };
@@ -166,22 +114,27 @@ const Model: React.FC = () => {
           {modelEntities.map((ent, index) => {
             const isSelectedPocket =
               selectedPocketId !== null &&
-              pocketClusters?.get(ent.entityId) === selectedPocketId;
+              pocketClusters?.get(ent.id) === selectedPocketId;
 
-            const displayColor = isSelectedPocket ? 'magenta' : ent.color;
+
+
+            let displayColor = !highlightPockets ? ent.color : "gray";
+            displayColor = highlightPockets && pocketClusters?.has(ent.id) ? "yellow" : displayColor;
+            displayColor = isSelectedPocket ? "magenta" : displayColor;
+            const opacity = isSelectedPocket ? 1 : 0.8;
 
             return (
               <mesh
                 key={index}
-                geometry={ent.bufferGeometry}
+                geometry={ent.mesh.geometry}
                 castShadow
                 receiveShadow
-                onClick={(event) => handlePocketClick(event, ent.entityId)}
+                onClick={(event) => handlePocketClick(event, ent.id)}
               >
                 <meshStandardMaterial
                   color={displayColor}
-                  transparent={!ent.belongsToPocket}
-                  opacity={ent.opacity}
+                  transparent={true}
+                  opacity={opacity}
                 />
               </mesh>
             );
@@ -206,15 +159,15 @@ const Model: React.FC = () => {
         </GizmoHelper>
       </Canvas>
 
-      {selectedPocketId && (
+      {selectedPocketId !== null && selectedPocketId !== undefined && (
         <div className="sidebar" ref={sidebarRef}>
+
           <div className="resizer" onMouseDown={handleMouseDown}></div>
           <PocketInfo selectedPocket={selectedPocketId} />
           <div className="cross-section-header">
             <h4>X Axis Cross Section</h4>
           </div>
-          <CrossSection
-            clippingPlane={clippingPlaneX}
+          <CrossSectionCanvas
             modelEntities={modelEntities}
             targetPosition={averagePosition}
             selectedPocketId={selectedPocketId}
@@ -224,8 +177,7 @@ const Model: React.FC = () => {
           <div className="cross-section-header">
             <h4>Z Axis Cross Section</h4>
           </div>
-          <CrossSection
-            clippingPlane={clippingPlaneZ}
+          <CrossSectionCanvas
             modelEntities={modelEntities}
             targetPosition={averagePosition}
             selectedPocketId={selectedPocketId}

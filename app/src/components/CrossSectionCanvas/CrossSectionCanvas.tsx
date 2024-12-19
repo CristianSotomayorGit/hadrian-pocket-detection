@@ -20,32 +20,35 @@ const CROSS_SECTION_CANVAS_SETTINGS = {
 };
 
 interface CrossSectionCanvasProps {
-    clippingPlane: THREE.Plane | null;
     modelEntities: ModelEntity[] | null;
     targetPosition: THREE.Vector3 | null;
     selectedPocketId: number | null;
-    pocketClusters: Map<string, number> | null;
+    pocketClusters: Map<number, number> | null;
     clippingAxis: "x" | "y" | "z"
 }
 
-const CrossSectionCanvas: React.FC<CrossSectionCanvasProps> = ({ clippingPlane, modelEntities, targetPosition, selectedPocketId, pocketClusters, clippingAxis }) => {
+const CrossSectionCanvas: React.FC<CrossSectionCanvasProps> = ({ modelEntities, targetPosition, selectedPocketId, pocketClusters, clippingAxis }) => {
 
-    if (!clippingPlane || !modelEntities || !targetPosition || !pocketClusters || !selectedPocketId)
+    if (!modelEntities || !targetPosition || !pocketClusters)
         return <div className="cross-section-canvas">Error: Some data required for rendering is null</div>;
 
     let cameraPosition = new THREE.Vector3(0, 0, 0);
     let borderColor = '';
+    let clippingPlane = null;
 
     if (clippingAxis === "x") {
         cameraPosition = CROSS_SECTION_CANVAS_SETTINGS.xAxisCameraPosition;
         borderColor = CROSS_SECTION_CANVAS_SETTINGS.xAxisColor;
+        clippingPlane = targetPosition ? new THREE.Plane(new THREE.Vector3(0, 0, 1), -targetPosition.z) : null;
     }
 
     if (clippingAxis === "z") {
         cameraPosition = CROSS_SECTION_CANVAS_SETTINGS.zAxisCameraPosition;
         borderColor = CROSS_SECTION_CANVAS_SETTINGS.zAxisColor;
-    }
+        clippingPlane = targetPosition ? new THREE.Plane(new THREE.Vector3(1, 0, 0), -targetPosition.x) : null;
 
+    }
+    
     return (
         <div className="cross-section-canvas" style={{ borderColor: borderColor }}>
             <Canvas
@@ -61,7 +64,7 @@ const CrossSectionCanvas: React.FC<CrossSectionCanvasProps> = ({ clippingPlane, 
                 {modelEntities.map((entity) => {
                     const isSelected =
                         selectedPocketId !== null &&
-                        pocketClusters.get(entity.entityId) === selectedPocketId;
+                        pocketClusters.get(entity.id) === selectedPocketId;
 
                     const color = isSelected
                         ? CROSS_SECTION_CANVAS_SETTINGS.selectedColor
@@ -71,7 +74,7 @@ const CrossSectionCanvas: React.FC<CrossSectionCanvasProps> = ({ clippingPlane, 
                         : CROSS_SECTION_CANVAS_SETTINGS.defaultOpacity;
 
                     return (
-                        <mesh key={entity.entityId} geometry={entity.bufferGeometry}>
+                        <mesh key={entity.id} geometry={entity.mesh.geometry}>
                             <meshStandardMaterial
                                 color={color}
                                 transparent

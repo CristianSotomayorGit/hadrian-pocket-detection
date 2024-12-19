@@ -1,51 +1,43 @@
 import { useState, useCallback } from 'react';
-
-type GraphEdgeType = 0 | 1 | 2;
-
-interface AdjacencyMap {
-  [entityId: string]: string[];
-}
-
-interface EdgeMetadataMap {
-  [edgeId: string]: GraphEdgeType[];
-}
+import { GraphEdgeType, ModelEntity } from '../types/types';
 
 export function usePocketDetections() {
-  const [pocketClusters, setPocketClusters] = useState<Map<string, number> | null>(null);
+  const [pocketClusters, setPocketClusters] = useState<Map<number, number> | null>(null);
 
-  const detectPockets = useCallback((adjacencyMap: AdjacencyMap, edgeMetadata: EdgeMetadataMap) => {
-    let mostConnectedFaceId = '';
+  const detectPockets = useCallback((modelEntities: ModelEntity[]) => {
+    let mostConnectedFaceId = 0;
     let maxNeighbors = 0;
-    for (const faceId in adjacencyMap) {
-      const nCount = adjacencyMap[faceId].length;
+
+    const concaveNeighbors: Record<number, number[]> = {};
+
+
+    for (const entity of modelEntities) {
+      const nCount = entity.neighbors.size;
       if (nCount > maxNeighbors) {
         maxNeighbors = nCount;
-        mostConnectedFaceId = faceId;
+        mostConnectedFaceId = entity.id;
       }
     }
 
-    const concaveNeighbors: Record<string, string[]> = {};
-    for (const entityId in adjacencyMap) {
-      concaveNeighbors[entityId] = [];
-    }
+    modelEntities.forEach(entity => {
+      concaveNeighbors[entity.id] = [];
 
-    for (const edgeId in edgeMetadata) {
-      const edgeTypes = edgeMetadata[edgeId];
-      if (edgeTypes.includes(0)) {
-        const [entA, entB] = edgeId.split('-');
-        if (entA === mostConnectedFaceId || entB === mostConnectedFaceId) {
-          continue;
+      entity.neighbors.forEach((EdgeTypes, neighborId) => {
+        if (EdgeTypes.includes(0) &&
+          entity.id !== mostConnectedFaceId &&
+          neighborId !== mostConnectedFaceId) {
+          concaveNeighbors[entity.id].push(neighborId);
         }
-        concaveNeighbors[entA].push(entB);
-      }
-    }
+      });
+    });
 
-    const visited = new Set<string>();
+
+    const visited = new Set<number>();
     let clusterId = 0;
-    const clusterMap = new Map<string, number>();
-    const clusterContents: Record<number, string[]> = {};
+    const clusterMap = new Map<number, number>();
+    const clusterContents: Record<number, number[]> = {};
 
-    function bfs(startId: string) {
+    function bfs(startId: number) {
       const queue = [startId];
       visited.add(startId);
       clusterMap.set(startId, clusterId);
@@ -64,15 +56,15 @@ export function usePocketDetections() {
       }
     }
 
-    for (const entityId in adjacencyMap) {
-      if (entityId === mostConnectedFaceId) continue;
-      if (!visited.has(entityId)) {
-        bfs(entityId);
+    for (const entity of modelEntities) {
+      if (entity.id === mostConnectedFaceId) continue;
+      if (!visited.has(entity.id)) {
+        bfs(entity.id);
         clusterId++;
       }
     }
 
-    const finalClusterMap = new Map<string, number>();
+    const finalClusterMap = new Map<number, number>();
     let newClusterId = 0;
 
     for (let cid = 0; cid < clusterId; cid++) {
@@ -106,23 +98,25 @@ export function usePocketDetections() {
       }
     };
 
-    for (const edgeId in edgeMetadata) {
-      const [entA, entB] = edgeId.split('-');
-      const clusterA = finalClusterMap.get(entA);
-      const clusterB = finalClusterMap.get(entB);
+    for (const entity of modelEntities) {
+      entity.neighbors.forEach((EdgeTypes: GraphEdgeType[], neighborId: number) => {
 
-      if (
-        clusterA !== undefined &&
-        clusterB !== undefined &&
-        clusterA !== clusterB
-      ) {
-        union(clusterA, clusterB);
-      }
+        const clusterA = finalClusterMap.get(entity.id);
+        const clusterB = finalClusterMap.get(neighborId);
+
+        if (
+          clusterA !== undefined &&
+          clusterB !== undefined &&
+          clusterA !== clusterB
+        ) {
+          union(clusterA, clusterB);
+        }
+      });
     }
 
     const rootToNewId = new Map<number, number>();
     let mergedClusterId = 0;
-    const mergedClusterMap = new Map<string, number>();
+    const mergedClusterMap = new Map<number, number>();
 
     finalClusterMap.forEach((cid, entId) => {
       const root = find(cid);
