@@ -48,7 +48,7 @@ const CrossSectionCanvas: React.FC<CrossSectionCanvasProps> = ({ modelEntities, 
         clippingPlane = targetPosition ? new THREE.Plane(new THREE.Vector3(1, 0, 0), -targetPosition.x) : null;
 
     }
-    console.log('here')
+    
     return (
         <div className="cross-section-canvas" style={{ borderColor: borderColor }}>
             <Canvas
